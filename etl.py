@@ -58,8 +58,6 @@ def process_files(file: str, cols_to_remove:list, cols_to_rename:dict):
     print("Processed:", file)
     return df 
 
-import polars as pl
-
 def transform_accidents_df(df_input: pl.DataFrame) -> pl.DataFrame:
     df = df_input.unique(subset=["id"])
 
@@ -80,7 +78,6 @@ def transform_accidents_df(df_input: pl.DataFrame) -> pl.DataFrame:
     )
 
     return df
-
 
 def transform_tickets_df(df_input: pl.DataFrame)-> pl.DataFrame:
     df = df_input  
@@ -103,7 +100,7 @@ def transform_tickets_df(df_input: pl.DataFrame)-> pl.DataFrame:
     
     # Agrupar pelos campos especificados e contar ocorrências
     df_grouped = (
-        df.group_by(["data", "uf_infracao", "municipio", "descricao", "especie", "marca"])
+        df.group_by(["data", "uf_infracao", "municipio", "descricao"])
         .agg(pl.len().alias("total_multas"))
         .sort("total_multas", descending=True)  # Ordena pelo maior número de ocorrências
     )
@@ -144,6 +141,8 @@ def run_tickets(input_folder:str, output_file:str):
         'qtd_infracoes',
         'inicio_vigencia_da_infracao',
         'numero_do_auto',
+        'marca',
+        'especie'
     ]
 
     rename = { 
@@ -177,8 +176,7 @@ def run_tickets(input_folder:str, output_file:str):
                     with open(output_file, 'a') as f:
                         df.write_csv(f, separator=';', include_header=False)
                 first_write = False
-                
-                
+
 def run_accidents(input_folder:str, output_file:str):
     remove = [
         'delegacia',
@@ -217,7 +215,6 @@ def run_accidents(input_folder:str, output_file:str):
                 
                 first_write = False
 
-
 def create_kpi(accident_file, tickets_file):
     
     df_a = pl.scan_csv(accident_file,separator=';', infer_schema_length=0) 
@@ -247,7 +244,7 @@ if __name__ == '__main__':
     accident_file = 'all_accidents.csv'
     tickets_file = 'all_tickets.csv'
     
-    run_accidents(folder_accidents, accident_file)    
+    # run_accidents(folder_accidents, accident_file)    
     run_tickets(folder_tickets, tickets_file)
     
     create_kpi(accident_file, tickets_file)
